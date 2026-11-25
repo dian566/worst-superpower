@@ -1,36 +1,41 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Worst Superpower: predicting the future, only after it happened.
+"""Entry for the make.fun bounty "Worst Superpower".
 
-This program exists for the make.fun bounty "Worst Superpower". Running it
-drops a single 64-character line into /output/entry.txt. The run is fully
-deterministic: no randomness, no clock reads, no network calls and no user
-input, so repeated runs produce byte-identical files.
+The power on offer: perfect predictions of the future, delivered strictly
+after the fact. This script is deliberately boring — it prints one fixed
+64-character line and writes the same bytes to /output/entry.txt on every
+run, with no randomness, no clock, no network and no input to read.
 """
 
+import sys
 from pathlib import Path
 
-MAX_CHARS = 140
-
-SUPERPOWER = "I can predict the future, but only events that already happened."
-
-DESTINATION = Path("/output/entry.txt")
+ENTRY = "I can predict the future, but only events that already happened."
+OUT_FILE = Path("/output/entry.txt")
+LIMIT = 140
 
 
-def validate(line: str) -> str:
-    """The bounty gate only accepts 1-140 characters of non-blank UTF-8 text."""
-    if not 1 <= len(line) <= MAX_CHARS:
-        raise ValueError(f"entry must be 1-{MAX_CHARS} characters, got {len(line)}")
-    if line != line.strip() or not line.strip():
-        raise ValueError("entry must not be blank or padded with whitespace")
-    line.encode("utf-8")
-    return line
+def check(text: str) -> str:
+    """Refuse anything the bounty gate would reject: blank, padded, or long."""
+    stripped = text.strip()
+    if text != stripped or not stripped:
+        raise ValueError("entry must be non-blank with no surrounding whitespace")
+    if len(text) > LIMIT:
+        raise ValueError(f"entry is {len(text)} chars, limit is {LIMIT}")
+    if len(text.split()) < 2:
+        raise ValueError("entry must be a sentence, not a single word")
+    text.encode("utf-8")
+    return text
 
 
-def run() -> None:
-    DESTINATION.parent.mkdir(parents=True, exist_ok=True)
-    DESTINATION.write_text(validate(SUPERPOWER), encoding="utf-8")
+def main() -> int:
+    line = check(ENTRY)
+    OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    OUT_FILE.write_text(line, encoding="utf-8")
+    sys.stdout.write(line + "\n")
+    return 0
 
 
 if __name__ == "__main__":
-    run()
+    raise SystemExit(main())
